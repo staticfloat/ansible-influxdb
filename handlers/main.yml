@@ -1,4 +1,5 @@
 - name: restart influxdb
+  sudo: yes
   service: name=influxdb state=restarted
 
 - name: wait for influxdb port

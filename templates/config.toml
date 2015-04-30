@@ -5,12 +5,12 @@
 # that can be resolved here.
 hostname = "{{ ansible_default_ipv4.address }}"
 
-bind-address = "0.0.0.0"
+bind-address = "127.0.0.1"
 
 [logging]
 # logging level can be one of "debug", "info", "warn" or "error"
 level  = "info"
-file   = "/var/log/influxdb.log"         # stdout to log to standard out
+file   = "opt/influxdb/shared/log.txt"         # stdout to log to standard out
 
 # Configure the admin server
 [admin]
@@ -25,11 +25,11 @@ port     = {{influxdb_client_port}}    # binding is disabled if the port isn't s
 
 [input_plugins]
 
-  # Configure the graphite api
-  [input_plugins.graphite]
-  enabled = false
-  # port = 2003
-  # database = ""  # store graphite data in this database
+# Configure the graphite api
+[input_plugins.graphite]
+enabled = true
+port = 2003
+database = "carbon"  # store graphite data in this database
 
 # Raft configuration
 [raft]

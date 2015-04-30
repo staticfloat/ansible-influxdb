@@ -1,7 +1,9 @@
 - name: Fetch package
+  sudo: yes
   get_url: url=http://s3.amazonaws.com/influxdb/influxdb_{{ influxdb.version }}_amd64.deb dest=/usr/local/src/influxdb_{{ influxdb.version }}_amd64.deb
 
 - name: Install package
+  sudo: yes
   command: dpkg --skip-same-version -i /usr/local/src/influxdb_{{ influxdb.version }}_amd64.deb
   register: dpkg_result
   changed_when: "dpkg_result.stdout.startswith('Selecting')"
@@ -13,12 +15,12 @@
   changed_when: false
 
 - name: Delete raft dir before hostname change
+  sudo: yes
   file: dest=/opt/influxdb/shared/data/raft state=absent
   when: config_has_ip|failed
 
 - name: Update config
+  sudo: yes
   template: src=config.toml dest=/opt/influxdb/shared/config.toml
   notify:
     - restart influxdb
-    - wait for influxdb port
-    
