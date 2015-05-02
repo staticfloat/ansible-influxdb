@@ -1,26 +1,41 @@
 - name: Fetch package
   sudo: yes
-  get_url: url=http://s3.amazonaws.com/influxdb/influxdb_{{ influxdb.version }}_amd64.deb dest=/usr/local/src/influxdb_{{ influxdb.version }}_amd64.deb
+  get_url: url="http://s3.amazonaws.com/influxdb/influxdb_{{ influxdb.version }}_amd64.deb" dest="/usr/local/src/influxdb_{{ influxdb.version }}_amd64.deb"
 
 - name: Install package
   sudo: yes
-  command: dpkg --skip-same-version -i /usr/local/src/influxdb_{{ influxdb.version }}_amd64.deb
+  command: dpkg --skip-same-version -i "/usr/local/src/influxdb_{{ influxdb.version }}_amd64.deb"
   register: dpkg_result
   changed_when: "dpkg_result.stdout.startswith('Selecting')"
 
 - name: Check for ip address in config file
   command: grep -E '^\s*hostname.*{{ ansible_default_ipv4.address }}' /opt/influxdb/shared/config.toml
+  #/etc/opt/influxdb/influxdb.conf
   register: config_has_ip
   ignore_errors: true
   changed_when: false
 
-- name: Delete raft dir before hostname change
-  sudo: yes
-  file: dest=/opt/influxdb/shared/data/raft state=absent
-  when: config_has_ip|failed
-
 - name: Update config
   sudo: yes
   template: src=config.toml dest=/opt/influxdb/shared/config.toml
-  notify:
-    - restart influxdb
+  # influxdb.conf.j2  /etc/opt/influxdb/influxdb.conf
+
+- name: start influxdb
+  sudo: yes
+  service: name=influxdb state=started
+
+- name: wait for influxdb port
+  sudo: yes
+  wait_for: port={{influxdb_client_port}} state=started
+
+- name: Create 'carbon' database
+  sudo: no
+  command: "curl -X POST 'http://localhost:8086/db?u=root&p=root' -d '{\"name\": \"carbon\"}'"
+
+- name: Set root password
+  sudo: no
+  command: "curl -X POST 'http://localhost:{{influxdb_client_port}}/cluster_admins/root?u=root&p=root' -d '{\"password\": \"{{influxdb_root_password}}\"}'"
+
+- name: Intall python client
+  sudo: yes
+  command: pip install influxdb

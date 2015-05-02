@@ -4,3 +4,4 @@ influxdb:
   seed_servers: [ ]
   replication_factor: 1
 influxdb_client_port: 8086
+influxdb_root_password: root
